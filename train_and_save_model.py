@@ -241,7 +241,8 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=disp_labels)
         disp.plot(cmap="Blues", values_format="d")
         plt.title(f"Confusion Matrix for {best_name}")
-        plt.show()
+        st.pyplot(plt.gcf())
+        plt.clf()
 
     else:
         final_score = mean_squared_error(y_test, y_pred)
@@ -259,7 +260,8 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
         plt.xlabel("Actual Values")
         plt.ylabel("Predicted Values")
         plt.grid(True)
-        plt.show()
+        st.pyplot(plt.gcf())
+        plt.clf()
 
         # --- Feature Importance Analysis ---
     print("\n🧐 Analyzing Feature Importance...")
@@ -314,7 +316,8 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
         plt.ylabel("Original Feature")
         plt.title("Top 10 Original Feature Importances")
         plt.gca().invert_yaxis()
-        plt.show()
+        st.pyplot(plt.gcf())
+        plt.clf()
         # --- END OF NEW SECTION ---
 
     # Save model file
