@@ -15,6 +15,7 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
     from sklearn.linear_model import LogisticRegression, LinearRegression
     from sklearn.metrics import accuracy_score, mean_squared_error, confusion_matrix, ConfusionMatrixDisplay, r2_score
     from sklearn import metrics
+    from sklearn.metrics import classification_report
     import numpy as np
 
     try:
@@ -187,7 +188,7 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
         }
         scoring = custom_Scoring
 
-    print("\n✨ Training models with 5-fold cross-validation...")
+    st.markdown("### ✨ Training models with 5-fold cross-validation...")
     best_score, best_model, best_name = -1, None, None
     for name, model in models.items():
         if isinstance(model, GridSearchCV):
@@ -199,12 +200,12 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
             clf = Pipeline([("preprocessor", preprocessor), ("model", model)])
             scores = cross_val_score(clf, X_train, y_train, cv=5, scoring=scoring)
             mean_score = scores.mean()
-            print(f"  > {name}: {scoring}={mean_score:.4f}")
+            st.write(f"  > **{name}**: {scoring}={mean_score:.4f}")
 
         if mean_score > best_score:
             best_score, best_model, best_name = mean_score, model, name
 
-    print("\n🏆 Best Model Found!")
+    st.markdown("### 🏆 Best Model Found!")
     print(f"Name: {best_name}, Score: {best_score:.4f}")
 
     if not isinstance(best_model, Pipeline):
@@ -213,23 +214,27 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
     best_model.fit(X_train, y_train)
     y_pred = best_model.predict(X_test)
 
-    print("\n📊 Evaluating on Test Set...")
+    st.markdown("####📊 Evaluating on Test Set...")
 
     if problem_type == "classification":
         y_test_labels = np.array([target_labels[int(i)] for i in y_test])
         y_pred_labels = np.array([target_labels[int(i)] for i in y_pred])
 
         final_score = accuracy_score(y_test, y_pred)
-        print(f"Test Accuracy: {final_score:.4f}")
+        st.metric(label="Test Accuracy", value=f"{final_score:.4f}")
         scores = cross_val_score(clf, X, y, cv=5, scoring='f1_weighted')
         mean_score = scores.mean()
-        print(f"Overall Accuracy: {mean_score:.4f}")
-        print(metrics.classification_report(y_test, y_pred))
+        st.metric(label="Overall Accuracy", value=f"{mean_score:.4f}")
+        st.text("Classification Report")
+        st.text(classification_report(y_test, y_pred))
         F1_Score = metrics.f1_score(y_test, y_pred, average='weighted')
-        print('Accuracy of the model on Testing Sample Data:', round(F1_Score, 2))
-        print("\nExample Predictions:")
-        for i in range(5):
-            print(f"  - Actual: {y_test_labels[i]}, Predicted: {y_pred_labels[i]}")
+        st.metric(label="Accuracy of the model on Testing Sample Data", value=round(F1_Score, 2))
+        example_preds = pd.DataFrame({
+            "Actual": y_test_labels[:5],
+            "Predicted": y_pred_labels[:5]
+                            })
+        st.write("### Example Predictions")
+        st.table(example_preds)
 
         cm = confusion_matrix(y_test, y_pred)
 
@@ -305,8 +310,8 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
         grouped_importance = importance_df.groupby('original_feature')['importance'].sum().sort_values(
             ascending=False).reset_index()
 
-        print("\nTop 10 Most Important Original Features:")
-        print(grouped_importance.head(10).to_string(index=False))
+        st.write("### Top 10 Most Important Features")
+        st.dataframe(grouped_importance.head(10))
 
         # Plot the top 10 most important original features
         plt.figure(figsize=(10, 6))
@@ -335,7 +340,8 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
     with open(f"{model_name}_metadata.json", "w") as f:
         json.dump(metadata, f, indent=4)
 
-    print(f"\n✅ Model saved as {model_file}")
-    print(f"✅ Metadata saved as {model_name}_metadata.json")
+    st.subheader("📑 Model Metadata")
+    st.json(metadata)
+    st.success(f"✅ Model saved as `{model_file}`")
 
     return best_model, model_file, metadata
