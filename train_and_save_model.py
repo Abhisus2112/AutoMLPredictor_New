@@ -290,6 +290,7 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
         "algorithm": best_name,
         "dataset_name": file_path.name if hasattr(file_path, 'name') else os.path.basename(file_path),
         "problem_type": problem_type,
+        "target_labels": target_labels,
         "best_cv_score": float(best_score),
     }
     with open(f"{model_name}_metadata.json", "w") as f:
@@ -297,6 +298,26 @@ def train_and_save_model(file_path, model_name="MyCustomModel"):
 
     st.subheader("📑 Model Metadata")
     st.json(metadata)
-    st.success(f"✅ Model saved as `{model_file}`")
+    st.success(f"✅ Model training complete! Download links are now available.")
+
+    # --- ✨ NEW: Save file contents to the app's memory (Session State) ✨ ---
+
+    # Read the model file from disk into memory as bytes
+    with open(model_file, "rb") as f:
+        model_bytes = f.read()
+
+    # Convert metadata dictionary to a JSON string in memory
+    json_string = json.dumps(metadata, indent=4)
+
+    # Store everything in st.session_state so it survives the page refresh
+    st.session_state['training_complete'] = True
+    st.session_state['model_bytes'] = model_bytes
+    st.session_state['model_filename'] = model_file
+    st.session_state['json_string'] = json_string
+    st.session_state['json_filename'] = f"{model_name}_metadata.json"
+
+    # Note: The download buttons are REMOVED from this file.
+
+    return best_model, model_file, metadata
 
     return best_model, model_file, metadata
